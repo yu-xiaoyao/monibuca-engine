@@ -140,6 +140,9 @@ func (io *IO) auth(key string, secret string, expire string) bool {
 	if unixTime, err := strconv.ParseInt(expire, 16, 64); err != nil || time.Now().Unix() > unixTime {
 		return false
 	}
+	if len(secret) != 32 {
+		return false
+	}
 	trueSecret := md5.Sum([]byte(key + io.Stream.Path + expire))
 	for i := 0; i < 16; i++ {
 		hex, err := strconv.ParseInt(secret[i<<1:(i<<1)+2], 16, 16)
