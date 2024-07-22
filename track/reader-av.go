@@ -13,11 +13,13 @@ const (
 	READSTATE_INIT = iota
 	READSTATE_FIRST
 	READSTATE_NORMAL
+	READSTATE_WAITKEY
 )
 const (
 	SUBMODE_REAL = iota
 	SUBMODE_NOJUMP
 	SUBMODE_BUFFER
+	SUBMODE_WAITKEY
 )
 
 var ErrDiscard = errors.New("discard")
@@ -89,6 +91,13 @@ func (r *AVRingReader) ReadFrame(mode int) (err error) {
 				r.Info("buffer mode", zap.Duration("time", r.Track.LastValue.Timestamp-r.Track.HistoryRing.Value.Timestamp))
 			}
 			r.State = READSTATE_NORMAL
+		case SUBMODE_WAITKEY:
+			startRing = r.Track.Ring
+			if startRing == r.Track.IDRing {
+				r.State = READSTATE_NORMAL
+			} else {
+				r.State = READSTATE_WAITKEY
+			}
 		}
 		if err = r.StartRead(startRing); err != nil {
 			return
@@ -125,6 +134,18 @@ func (r *AVRingReader) ReadFrame(mode int) (err error) {
 		if mode != SUBMODE_REAL {
 			if fast := r.Value.Timestamp - r.FirstTs - time.Since(r.startTime); fast > 0 && fast < time.Second {
 				time.Sleep(fast)
+			}
+		}
+	case READSTATE_WAITKEY:
+		r.Debug("wait key frame", zap.Uint32("seq", r.Track.Value.Sequence))
+		for {
+			if err = r.readFrame(); err != nil {
+				return
+			}
+			if r.Value.IFrame {
+				r.Debug("got key frame", zap.Uint32("seq", r.Track.Value.Sequence))
+				r.State = READSTATE_NORMAL
+				break
 			}
 		}
 	}
