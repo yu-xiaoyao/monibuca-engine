@@ -131,7 +131,7 @@ func (r *AVRingReader) ReadFrame(mode int) (err error) {
 		if err = r.readFrame(); err != nil {
 			return
 		}
-		if mode != SUBMODE_REAL {
+		if mode == SUBMODE_NOJUMP {
 			if fast := r.Value.Timestamp - r.FirstTs - time.Since(r.startTime); fast > 0 && fast < time.Second {
 				time.Sleep(fast)
 			}
