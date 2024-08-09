@@ -220,19 +220,19 @@ func Run(ctx context.Context, conf any) (err error) {
 	json.NewEncoder(contentBuf).Encode(&rp)
 	req.Body = io.NopCloser(contentBuf)
 	EngineConfig.OnEvent(ctx)
-	go func() {
-		var c http.Client
-		reportTimer := time.NewTimer(time.Minute)
-		c.Do(req)
-		for {
-			<-reportTimer.C
-			contentBuf.Reset()
-			contentBuf.WriteString(fmt.Sprintf(`{"uuid":"`+UUID+`","streams":%d}`, Streams.Len()))
-			req.Body = io.NopCloser(contentBuf)
-			c.Do(req)
-			reportTimer.Reset(time.Minute)
-		}
-	}()
+	//go func() {
+	//	var c http.Client
+	//	reportTimer := time.NewTimer(time.Minute)
+	//	c.Do(req)
+	//	for {
+	//		<-reportTimer.C
+	//		contentBuf.Reset()
+	//		contentBuf.WriteString(fmt.Sprintf(`{"uuid":"`+UUID+`","streams":%d}`, Streams.Len()))
+	//		req.Body = io.NopCloser(contentBuf)
+	//		c.Do(req)
+	//		reportTimer.Reset(time.Minute)
+	//	}
+	//}()
 	for _, plugin := range enabledPlugins {
 		plugin.Config.OnEvent(EngineConfig) //引擎初始化完成后，通知插件
 	}
